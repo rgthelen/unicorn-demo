@@ -1,5 +1,5 @@
 // src/App.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRownd } from '@rownd/react';
 import './App.css'; // Ensure this import is correct
 import SettingsMenu from './SettingsMenu';
@@ -7,15 +7,15 @@ import ConfettiButton from './ConfettiButton'; // Import the ConfettiButton comp
 
 function ChatApp() {
   const { is_authenticated, is_initializing, requestSignIn, getAccessToken, setUserValue, user } = useRownd();
-  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [messageCount, setMessageCount] = useState(0);
+  const messagesRef = useRef([]); // Use a ref to store messages
 
   useEffect(() => {
-    if (is_authenticated) {
+    if (is_authenticated && messagesRef.current.length === 0) {
       const initialMessage = constructInitialMessage(user);
-      setMessages([initialMessage]);
+      messagesRef.current = [initialMessage];
     }
   }, [is_authenticated, user]);
 
@@ -42,11 +42,12 @@ function ChatApp() {
     if (input.trim() === '') return;
 
     const userMessage = { role: 'user', content: input };
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
+    messagesRef.current = [...messagesRef.current, userMessage];
     setInput('');
     setIsTyping(true);
     setMessageCount(messageCount + 1);
+
+    console.log('Messages before sending:', messagesRef.current);
 
     try {
       const token = await getAccessToken();
@@ -58,7 +59,7 @@ function ChatApp() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ messages: updatedMessages }),
+        body: JSON.stringify({ messages: messagesRef.current }),
         mode: 'cors'
       });
 
@@ -75,11 +76,11 @@ function ChatApp() {
         setIsTyping(false);
         if (data && data.response) {
           const botMessage = { role: 'system', content: data.response };
-          setMessages((prev) => [...prev, botMessage]);
-          console.log('Updated messages:', [...updatedMessages, botMessage]);
+          messagesRef.current = [...messagesRef.current, botMessage];
+          console.log('Updated messages:', messagesRef.current);
 
-          if (messageCount === 2 || (messageCount > 2 && (messageCount - 2) % 20 === 0)) {
-            extractProfileData(updatedMessages);
+          if (messageCount === 3 || (messageCount > 3 && (messageCount - 3) % 20 === 0)) {
+            extractProfileData(messagesRef.current);
           }
         } else {
           console.error('Unexpected response structure:', data);
@@ -111,20 +112,16 @@ function ChatApp() {
       const { profileData } = await response.json();
       console.log('Extracted Profile Data:', profileData);
 
-      // Update Rownd profile with extracted data
       if (profileData.first_name) {
         setUserValue('first_name', profileData.first_name);
       }
 
       if (profileData.favorite_things) {
-        // Get current favorites from the user's profile
         const currentFavorites = user?.data?.favorites ? user.data.favorites.split(', ') : [];
         const newFavorites = profileData.favorite_things.split(', ');
 
-        // Merge new favorites with existing ones, avoiding duplicates
         const updatedFavorites = Array.from(new Set([...currentFavorites, ...newFavorites])).join(', ');
 
-        // Update the user's profile with the merged list
         setUserValue('favorites', updatedFavorites);
       }
     } catch (error) {
@@ -144,7 +141,7 @@ function ChatApp() {
         {is_authenticated ? (
           <div className="chat-container">
             <div className="chat-window">
-              {messages
+              {messagesRef.current
                 .filter((msg, index) => !(msg.role === 'system' && index === 0))
                 .map((msg, index) => (
                   <div key={index} className={`message ${msg.role}`}>
