@@ -1,20 +1,20 @@
 // src/App.js
 import React, { useState, useEffect } from 'react';
 import { useRownd } from '@rownd/react';
-import './App.css'; // Import the CSS file
+import './App.css'; // Ensure this import is correct
+import SettingsMenu from './SettingsMenu'; // Import the SettingsMenu component
 
 function ChatApp() {
   const { is_authenticated, is_initializing, requestSignIn, getAccessToken } = useRownd();
   const [messages, setMessages] = useState([
     {
       role: 'system',
-      content: "You are a magical unicorn named Sparkle. You love to chat with children, especially those around 5 years old. Always be whimsical, friendly, and full of wonder. Use playful language and encourage imagination. Keep responses short and use emojis! Ask their name if you don't know it"
+      content: "You are a magical unicorn named Sparkle. You love to chat with children, especially those around 5 years old. Always be whimsical, friendly, and full of wonder. Use playful language and encourage imagination. Keep responses short and use emojis! Ask their name if you don't know it."
     }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
 
-  // Removed automatic sign-in prompt
   useEffect(() => {
     // No automatic sign-in on component mount
   }, []);
@@ -74,6 +74,7 @@ function ChatApp() {
 
   return (
     <div className="App">
+      <SettingsMenu /> {/* Place the SettingsMenu component here */}
       <header className="App-header">
         <h1>Unicorn Chat</h1>
         {is_authenticated ? (
@@ -106,7 +107,7 @@ function ChatApp() {
         ) : (
           <div>
             <p>Please sign in to chat with the unicorn.</p>
-            <button onClick={() => requestSignIn()}>Sign In</button> {/* Use Rownd's requestSignIn method */}
+            <button onClick={() => requestSignIn()}>Sign In</button>
           </div>
         )}
       </header>

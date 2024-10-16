@@ -7,6 +7,7 @@ body {
   align-items: center;
   min-height: 100vh;
   overflow: hidden; /* Prevents body scrolling */
+  position: relative; /* Allows absolute positioning of children */
 }
 
 .App {
@@ -172,4 +173,65 @@ button:hover {
     padding: 8px 12px;
     font-size: 0.9rem;
   }
+}
+
+/* SettingsMenu Styles */
+.settings-menu {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000; /* Ensure it appears above other elements */
+}
+
+.hamburger-icon {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 30px;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+}
+
+.hamburger-icon div {
+  width: 100%; /* Ensure it fits within the button */
+  height: 3px; /* Standard height for hamburger lines */
+  background-color: #ff69b4; /* Set default color to pink */
+  border-radius: 2px;
+  transition: background-color 0.3s ease; /* Smooth transition for hover effect */
+}
+
+.hamburger-icon:hover div {
+  background-color: #f53293; /* Slightly different hover color */
+}
+
+.menu {
+  position: absolute;
+  right: 0;
+  top: 30px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 10px;
+  z-index: 1000;
+}
+
+.menu button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-size: 16px;
+  color: #ff69b4; /* Match the headline and button color */
+}
+
+.menu button:hover {
+  background-color: #f0f0f0;
 }
