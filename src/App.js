@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRownd } from '@rownd/react';
 import './App.css'; // Ensure this import is correct
 import SettingsMenu from './SettingsMenu';
+import ConfettiButton from './ConfettiButton'; // Import the ConfettiButton component
 
 function ChatApp() {
   const { is_authenticated, is_initializing, requestSignIn, getAccessToken, setUserValue, user } = useRownd();
@@ -19,16 +20,16 @@ function ChatApp() {
   }, [is_authenticated, user]);
 
   const constructInitialMessage = (user) => {
-    let messageContent = "You are a magical unicorn named Sparkle. You love to chat with children, especially those around 5 years old. Always be whimsical, friendly, and full of wonder. Use playful language and encourage imagination. Keep responses short, ask easy questions, and use emojis!";
+    let messageContent = "You are a magical unicorn named Sparkle. You love to chat with children, especially those around 5 years old. Always be whimsical, friendly, and full of wonder. Use playful language and encourage imagination. Keep responses short, ask easy questions and use emojis!";
 
     if (user?.data?.first_name) {
-      messageContent += ` The user's name is ${user.data.first_name}, but you don't have to use it all of the time.`;
+      messageContent += ` The user's name is ${user.data.first_name}, try to say "welcome back" early on, but don't repeat it.`;
     } else {
-      messageContent += " If their name is not known ask for it.";
+      messageContent += ` If their name is not known ask for it.`;
     }
 
     if (user?.data?.favorites) {
-      messageContent += ` They previously mentioned they like ${user.data.favorites}. But, feel free to explore other areas of interest.`;
+      messageContent += ` They previously mentioned they like ${user.data.favorites}. Mention that you remember their favorites, but, feel free to explore other areas of interest.`;
     }
 
     return {
@@ -77,7 +78,7 @@ function ChatApp() {
           setMessages((prev) => [...prev, botMessage]);
           console.log('Updated messages:', [...updatedMessages, botMessage]);
 
-          if (messageCount === 3 || (messageCount > 3 && (messageCount - 3) % 10 === 0)) {
+          if (messageCount === 2 || (messageCount > 2 && (messageCount - 2) % 20 === 0)) {
             extractProfileData(updatedMessages);
           }
         } else {
@@ -114,8 +115,17 @@ function ChatApp() {
       if (profileData.first_name) {
         setUserValue('first_name', profileData.first_name);
       }
+
       if (profileData.favorite_things) {
-        setUserValue('favorites', profileData.favorite_things);
+        // Get current favorites from the user's profile
+        const currentFavorites = user?.data?.favorites ? user.data.favorites.split(', ') : [];
+        const newFavorites = profileData.favorite_things.split(', ');
+
+        // Merge new favorites with existing ones, avoiding duplicates
+        const updatedFavorites = Array.from(new Set([...currentFavorites, ...newFavorites])).join(', ');
+
+        // Update the user's profile with the merged list
+        setUserValue('favorites', updatedFavorites);
       }
     } catch (error) {
       console.error('Error extracting profile data:', error);
@@ -135,7 +145,7 @@ function ChatApp() {
           <div className="chat-container">
             <div className="chat-window">
               {messages
-                .filter((msg, index) => !(msg.role === 'system' && index === 0)) // Filter out the first system message
+                .filter((msg, index) => !(msg.role === 'system' && index === 0))
                 .map((msg, index) => (
                   <div key={index} className={`message ${msg.role}`}>
                     <strong>{msg.role === 'user' ? 'You' : 'Unicorn'}:</strong> {msg.content}
@@ -165,6 +175,7 @@ function ChatApp() {
           </div>
         )}
       </header>
+      <ConfettiButton /> {/* Add the ConfettiButton component */}
     </div>
   );
 }
