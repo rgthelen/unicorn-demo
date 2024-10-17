@@ -1,0 +1,12 @@
+/* src/components/SignInCallToAction.css */
+.cta {
+  font-weight: bold;
+  font-size: 1.1em;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.cta:hover {
+  color: #ff69b4; /* Change to your desired hover color */
+}
+

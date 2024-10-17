@@ -53,12 +53,12 @@ body {
 }
 
 .chat-window {
-  flex-grow: 1;
+  width: 600px; /* Adjusted to be 50% wider than the original 400px */
+  max-width: 100%;
   overflow-y: auto;
-  margin-bottom: 10px;
   padding: 10px;
-  border-radius: 10px;
   background-color: #f9f9f9;
+  border-radius: 8px;
 }
 
 .message {
@@ -69,6 +69,18 @@ body {
   position: relative;
   clear: both;
   font-size: 1rem;
+}
+.text-bubble {
+  background-color: #e0e0e0;
+  padding: 10px;
+  border-radius: 15px;
+  max-width: 70%;
+}
+.unicorn-avatar {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+  border-radius: 50%;
 }
 
 .message.user {

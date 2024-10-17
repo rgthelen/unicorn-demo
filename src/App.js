@@ -4,9 +4,11 @@ import { useRownd } from '@rownd/react';
 import './App.css'; // Ensure this import is correct
 import SettingsMenu from './SettingsMenu';
 import ConfettiButton from './ConfettiButton'; // Import the ConfettiButton component
+import SignInCallToAction from './components/SignInCallToAction'; // Import the new component
+import unicornImage from './fun-unicorn.png'; // Import the unicorn image
 
 function ChatApp() {
-  const { is_authenticated, is_initializing, requestSignIn, getAccessToken, setUserValue, user } = useRownd();
+  const { is_authenticated, is_initializing, requestSignIn, getAccessToken, setUserValue, getUser, user } = useRownd();
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [messageCount, setMessageCount] = useState(0);
@@ -20,7 +22,7 @@ function ChatApp() {
   }, [is_authenticated, user]);
 
   const constructInitialMessage = (user) => {
-    let messageContent = "You are a magical unicorn named Sparkle. You love to chat with children, especially those around 5 years old. Always be whimsical, friendly, and full of wonder. Use playful language and encourage imagination. Keep responses short, ask easy questions and use emojis!";
+    let messageContent = "You are a magical unicorn named Sparkle. You love to chat with children, especially those around 5 years old. Keep everything short and concise. Always be whimsical, friendly, and full of wonder. Use playful language and encourage imagination. Keep responses short, ask easy questions and use emojis!";
 
     if (user?.data?.first_name) {
       messageContent += ` The user's name is ${user.data.first_name}, try to say "welcome back" early on, but don't repeat it.`;
@@ -111,19 +113,25 @@ function ChatApp() {
 
       const { profileData } = await response.json();
       console.log('Extracted Profile Data:', profileData);
-
-      if (profileData.first_name) {
-        setUserValue('first_name', profileData.first_name);
-      }
-
-      if (profileData.favorite_things) {
+     
+     /*  if (profileData.favorite_things) {
         const currentFavorites = user?.data?.favorites ? user.data.favorites.split(', ') : [];
         const newFavorites = profileData.favorite_things.split(', ');
 
+        // Merge and ensure uniqueness
         const updatedFavorites = Array.from(new Set([...currentFavorites, ...newFavorites])).join(', ');
 
-        setUserValue('favorites', updatedFavorites);
+        console.log(`Updating favorites to: ${updatedFavorites}`);
+        await setUserValue('favorites', updatedFavorites);
       }
+      // Update first_name
+      if (profileData.first_name) {
+        console.log(`Updating first_name to: ${profileData.first_name}`);
+        await setUserValue('first_name', profileData.first_name);
+      }
+ */
+      // Update favorites
+
     } catch (error) {
       console.error('Error extracting profile data:', error);
     }
@@ -145,12 +153,16 @@ function ChatApp() {
                 .filter((msg, index) => !(msg.role === 'system' && index === 0))
                 .map((msg, index) => (
                   <div key={index} className={`message ${msg.role}`}>
-                    <strong>{msg.role === 'user' ? 'You' : 'Unicorn'}:</strong> {msg.content}
+                    {msg.role === 'system' ? (
+                      <img src={unicornImage} alt="Unicorn" className="unicorn-avatar" />
+                    ) : null}
+                    <SignInCallToAction text={msg.content} />
                   </div>
                 ))}
               {isTyping && (
                 <div className="message system">
-                  <strong>Unicorn:</strong> <span className="typing">...</span>
+                  <img src={unicornImage} alt="Unicorn" className="unicorn-avatar" />
+                  <span className="typing">...</span>
                 </div>
               )}
             </div>
