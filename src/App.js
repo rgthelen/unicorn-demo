@@ -8,24 +8,40 @@ import SignInCallToAction from './components/SignInCallToAction';
 import unicornImage from './fun-unicorn.png';
 import AudioRecorder from './components/AudioRecorder';
 import AudioPlayer from './components/AudioPlayer';
-import PassiveSignup from './components/PassiveSignup';
+
 
 function ChatApp() {
-  const { is_authenticated, requestSignIn, getAccessToken, user } = useRownd();
+// Removed is_authenticated and requestSignIn
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [messageCount, setMessageCount] = useState(0);
   const [audioData, setAudioData] = useState(null);
   const messagesRef = useRef([]);
-  const [signupTrigger, setSignupTrigger] = useState(false);
-  const chatWindowRef = useRef(null); // Ref for the chat window
+  const chatWindowRef = useRef(null);
+  const { getAccessToken, user, isLoading } = useRownd(); // Ref for the chat window
 
   useEffect(() => {
-    if (is_authenticated && messagesRef.current.length === 0) {
-      const initialMessage = constructInitialMessage(user);
-      messagesRef.current = [initialMessage];
-    }
-  }, [is_authenticated, user]);
+    const initialDelay = 1000; // 1 second delay
+    const retryDelay = 3000; // 3 seconds delay
+    let timeoutId;
+
+    const initializeMessages = () => {
+      if (!isLoading && messagesRef.current.length === 0) {
+        console.log('User data:', user); // Debugging line
+        if (user && user.data) {
+          const initialMessage = constructInitialMessage(user);
+          messagesRef.current = [initialMessage];
+        } else {
+          console.log('User data is empty or not available, retrying...');
+          timeoutId = setTimeout(initializeMessages, retryDelay);
+        }
+      }
+    };
+
+    timeoutId = setTimeout(initializeMessages, initialDelay);
+
+    return () => clearTimeout(timeoutId); // Cleanup timeout on unmount
+  }, [user, isLoading]);
 
   useEffect(() => {
     // Scroll to the bottom of the chat window whenever messages change
@@ -35,7 +51,7 @@ function ChatApp() {
   }, [messagesRef.current.length]);
 
   const constructInitialMessage = (user) => {
-    let messageContent = "You are a magical unicorn named Sparkle. You love to chat with children, especially those around 5 years old. Keep everything short and concise. Always be whimsical, friendly, and full of wonder. Use playful language and encourage imagination. Keep responses short, ask easy questions and use emojis!";
+    let messageContent = "You are a magical unicorn named Sparkle. You love to chat with children, especially those around 5 years old. Keep everything short and concise. Always be whimsical, friendly, and full of wonder. Use playful language and encourage imagination. Keep responses short and ask easy questions and use emojis!";
 
     if (user?.data?.first_name) {
       messageContent += ` The user's name is ${user.data.first_name}, try to say "welcome back" early on, but don't repeat it.`;
@@ -53,73 +69,73 @@ function ChatApp() {
     };
   };
 
-  const sendMessage = async (messageContent = null) => {
-    const content = messageContent !== null ? messageContent : input;
 
-    if (content.trim() === '') return;
+    const sendMessage = async (messageContent = null) => {
+      const content = messageContent !== null ? String(messageContent) : input;
 
-    const userMessage = { role: 'user', content };
-    messagesRef.current = [...messagesRef.current, userMessage];
-    setInput('');
-    setIsTyping(true);
-    setMessageCount(messageCount + 1);
+      console.log('Content to send:', content); // Debugging line
 
-    console.log('Messages before sending:', messagesRef.current);
-
-    try {
-      const token = await getAccessToken();
-      console.log('JWT Token:', token);
-
-      const response = await fetch('https://my-worker.robert-9e7.workers.dev/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ messages: messagesRef.current }),
-        mode: 'cors'
-      });
-
-      console.log('Response status:', response.status);
-
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
+      if (typeof content !== 'string') {
+        console.error('Expected a string but received:', typeof content);
+        return;
       }
 
-      const data = await response.json();
-      console.log('Response data:', data);
+      if (content.trim() === '') return;
 
-      // Check for trigger_rownd_event in the response
-      if (data.trigger_rownd_event === "sign-up-optional") {
-        setSignupTrigger(true); // Trigger passive sign-up
-      }
+      const userMessage = { role: 'user', content };
+      messagesRef.current = [...messagesRef.current, userMessage];
+      setInput('');
+      setIsTyping(true);
+      setMessageCount(messageCount + 1);
 
-      setTimeout(() => {
-        setIsTyping(false);
-        if (data && data.response) {
-          const botMessage = { role: 'system', content: data.response };
-          messagesRef.current = [...messagesRef.current, botMessage];
-          console.log('Updated messages:', messagesRef.current);
+      console.log('Messages before sending:', messagesRef.current);
 
-          // Check for keywords in the bot's response
-          checkForSignupTrigger(data.response);
-          
-          if (data.audioData) {
-            setAudioData(data.audioData);
-          }
+      try {
+        const token = await getAccessToken();
+        console.log('JWT Token:', token);
 
-          if (messageCount === 3 || (messageCount > 3 && (messageCount - 3) % 20 === 0)) {
-            extractProfileData(messagesRef.current);
-          }
-        } else {
-          console.error('Unexpected response structure:', data);
+        const response = await fetch('https://my-worker.robert-9e7.workers.dev/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ messages: messagesRef.current }),
+          mode: 'cors'
+        });
+
+        console.log('Response status:', response.status);
+
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
         }
-      }, 1000);
-    } catch (error) {
-      console.error('Error sending message:', error);
-      setIsTyping(false);
-    }
-  };
+
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        setTimeout(() => {
+          setIsTyping(false);
+          if (data && data.response) {
+            const botMessage = { role: 'system', content: data.response };
+            messagesRef.current = [...messagesRef.current, botMessage];
+            console.log('Updated messages:', messagesRef.current);
+
+            if (data.audioData) {
+              setAudioData(data.audioData);
+            }
+
+            if (messageCount === 3 || (messageCount > 3 && (messageCount - 3) % 20 === 0)) {
+              extractProfileData(messagesRef.current);
+            }
+          } else {
+            console.error('Unexpected response structure:', data);
+          }
+        }, 1000);
+      } catch (error) {
+        console.error('Error sending message:', error);
+        setIsTyping(false);
+      }
+    };
 
   const extractProfileData = async (messages) => {
     try {
@@ -164,11 +180,7 @@ function ChatApp() {
     }
   };
 
-  const checkForSignupTrigger = (message) => {
-    if (message.includes('sign-up') || message.includes('signing up') || message.includes('signing-in')) {
-      setSignupTrigger(true); // Trigger passive sign-up
-    }
-  };
+ 
 
   const handleTranscription = (data) => {
     console.log('Received transcription:', data);
@@ -186,46 +198,46 @@ function ChatApp() {
       <SettingsMenu />
       <header className="App-header">
         <h1>Unicorn Chat</h1>
-        {is_authenticated ? (
-          <div className="chat-container">
-            <div className="chat-window" ref={chatWindowRef}>
-              {messagesRef.current
-                .filter((msg, index) => !(msg.role === 'system' && index === 0))
-                .map((msg, index) => (
-                  <div key={index} className={`message ${msg.role}`}>
-                    {msg.role === 'system' ? (
-                      <img src={unicornImage} alt="Unicorn" className="unicorn-avatar" />
-                    ) : null}
-                    <SignInCallToAction text={msg.content} />
-                  </div>
-                ))}
-              {isTyping && (
-                <div className="message system">
-                  <img src={unicornImage} alt="Unicorn" className="unicorn-avatar" />
-                  <span className="typing">...</span>
+        <div className="chat-container">
+          <div className="chat-window" ref={chatWindowRef}>
+            {messagesRef.current
+              .filter((msg, index) => !(msg.role === 'system' && index === 0))
+              .map((msg, index) => (
+                <div key={index} className={`message ${msg.role}`}>
+                  {msg.role === 'system' ? (
+                    <img src={unicornImage} alt="Unicorn" className="unicorn-avatar" />
+                  ) : null}
+                  <SignInCallToAction text={msg.content} />
                 </div>
-              )}
-            </div>
-            <div className="input-container">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                placeholder="Type your message..."
-              />
-              <AudioRecorder onTranscription={handleTranscription} />
-              <button onClick={sendMessage}>Send</button>
-            </div>
+              ))}
+            {isTyping && (
+              <div className="message system">
+                <img src={unicornImage} alt="Unicorn" className="unicorn-avatar" />
+                <span className="typing">...</span>
+              </div>
+            )}
           </div>
-        ) : (
-          <div>
-            <p>Please sign in to chat with the unicorn.</p>
-            <button onClick={() => requestSignIn()}>Sign In</button>
+          <div className="input-container">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => {
+                console.log('Input changed:', e.target.value);
+                setInput(e.target.value);
+              }}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  console.log('Enter key pressed');
+                  sendMessage();
+                }
+              }}
+              placeholder="Type your message..."
+            />
+            <AudioRecorder onTranscription={handleTranscription} />
+            <button onClick={() => sendMessage()}>Send</button>
           </div>
-        )}
+        </div>
         {audioData && <AudioPlayer audioData={audioData} />}
-        <PassiveSignup trigger={signupTrigger} />
       </header>
       <ConfettiButton />
     </div>

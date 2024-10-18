@@ -98,8 +98,7 @@ const AudioRecorder = ({ onTranscription }) => {
     <div>
       <button
         onClick={toggleRecording}
-        className={`microphone-button ${isRecording ? 'recording' : ''}`}
-      >
+        className={`microphone-button ${isRecording ? 'recording' : ''}`}>
         <img src={microphoneIcon} alt="Microphone" className="microphone-icon" />
       </button>
       {/* Progress Bar */}
