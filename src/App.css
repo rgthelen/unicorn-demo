@@ -308,3 +308,17 @@ button:hover {
 .modal-content button:hover {
   background-color: #ff85c1;
 }
+
+/* Add this to ensure the microphone button is not affected */
+.microphone-button:hover {
+  background-color: transparent !important; /* Override any background color */
+}
+
+.progress-bar {
+  position: absolute; /* Position it at the bottom */
+  bottom: 0; /* Align to the bottom */
+  left: 0; /* Align to the left */
+  height: 5px; /* Height of the progress bar */
+  background-color: pink; /* Color of the progress bar */
+  transition: width 0.1s; /* Smooth transition for width change */
+}

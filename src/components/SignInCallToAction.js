@@ -11,7 +11,7 @@ const SignInCallToAction = ({ text }) => {
   };
 
   const renderTextWithCTA = (text) => {
-    const regex = /\b(signing in|sign-up|sign-in)\b/gi;
+    const regex = /\b(signing up|sign-up|sign-in)\b/gi;
     const parts = text.split(regex);
 
     return parts.map((part, index) => {

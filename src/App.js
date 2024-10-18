@@ -1,18 +1,24 @@
 // src/App.js
 import React, { useState, useEffect, useRef } from 'react';
 import { useRownd } from '@rownd/react';
-import './App.css'; // Ensure this import is correct
+import './App.css';
 import SettingsMenu from './SettingsMenu';
-import ConfettiButton from './ConfettiButton'; // Import the ConfettiButton component
-import SignInCallToAction from './components/SignInCallToAction'; // Import the new component
-import unicornImage from './fun-unicorn.png'; // Import the unicorn image
+import ConfettiButton from './ConfettiButton';
+import SignInCallToAction from './components/SignInCallToAction';
+import unicornImage from './fun-unicorn.png';
+import AudioRecorder from './components/AudioRecorder';
+import AudioPlayer from './components/AudioPlayer';
+import PassiveSignup from './components/PassiveSignup';
 
 function ChatApp() {
   const { is_authenticated, is_initializing, requestSignIn, getAccessToken, setUserValue, getUser, user } = useRownd();
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [messageCount, setMessageCount] = useState(0);
-  const messagesRef = useRef([]); // Use a ref to store messages
+  const [audioData, setAudioData] = useState(null);
+  const messagesRef = useRef([]);
+  const [signupTrigger, setSignupTrigger] = useState(false);
+  const chatWindowRef = useRef(null); // Ref for the chat window
 
   useEffect(() => {
     if (is_authenticated && messagesRef.current.length === 0) {
@@ -20,6 +26,13 @@ function ChatApp() {
       messagesRef.current = [initialMessage];
     }
   }, [is_authenticated, user]);
+
+  useEffect(() => {
+    // Scroll to the bottom of the chat window whenever messages change
+    if (chatWindowRef.current) {
+      chatWindowRef.current.scrollTop = chatWindowRef.current.scrollHeight;
+    }
+  }, [messagesRef.current.length]);
 
   const constructInitialMessage = (user) => {
     let messageContent = "You are a magical unicorn named Sparkle. You love to chat with children, especially those around 5 years old. Keep everything short and concise. Always be whimsical, friendly, and full of wonder. Use playful language and encourage imagination. Keep responses short, ask easy questions and use emojis!";
@@ -40,10 +53,12 @@ function ChatApp() {
     };
   };
 
-  const sendMessage = async () => {
-    if (input.trim() === '') return;
+  const sendMessage = async (messageContent = null) => {
+    const content = messageContent !== null ? messageContent : input;
 
-    const userMessage = { role: 'user', content: input };
+    if (content.trim() === '') return;
+
+    const userMessage = { role: 'user', content };
     messagesRef.current = [...messagesRef.current, userMessage];
     setInput('');
     setIsTyping(true);
@@ -74,12 +89,24 @@ function ChatApp() {
       const data = await response.json();
       console.log('Response data:', data);
 
+      // Check for trigger_rownd_event in the response
+      if (data.trigger_rownd_event === "sign-up-optional") {
+        setSignupTrigger(true); // Trigger passive sign-up
+      }
+
       setTimeout(() => {
         setIsTyping(false);
         if (data && data.response) {
           const botMessage = { role: 'system', content: data.response };
           messagesRef.current = [...messagesRef.current, botMessage];
           console.log('Updated messages:', messagesRef.current);
+
+          // Check for keywords in the bot's response
+          checkForSignupTrigger(data.response);
+          
+          if (data.audioData) {
+            setAudioData(data.audioData);
+          }
 
           if (messageCount === 3 || (messageCount > 3 && (messageCount - 3) % 20 === 0)) {
             extractProfileData(messagesRef.current);
@@ -137,18 +164,31 @@ function ChatApp() {
     }
   };
 
-  if (is_initializing) {
-    return <div>Loading...</div>;
-  }
+  const checkForSignupTrigger = (message) => {
+    if (message.includes('sign-up') || message.includes('signing up') || message.includes('signing-in')) {
+      setSignupTrigger(true); // Trigger passive sign-up
+    }
+  };
+
+  const handleTranscription = (data) => {
+    console.log('Received transcription:', data);
+    if (data && data.text) {
+      setInput(data.text); // Optional: If you want to display it in the input field
+      console.log('Input set to:', data.text);
+      
+      // Call sendMessage with the transcribed text
+      sendMessage(data.text);
+    }
+  };
 
   return (
     <div className="App">
-      <SettingsMenu /> {/* Place the SettingsMenu component here */}
+      <SettingsMenu />
       <header className="App-header">
         <h1>Unicorn Chat</h1>
         {is_authenticated ? (
           <div className="chat-container">
-            <div className="chat-window">
+            <div className="chat-window" ref={chatWindowRef}>
               {messagesRef.current
                 .filter((msg, index) => !(msg.role === 'system' && index === 0))
                 .map((msg, index) => (
@@ -174,6 +214,7 @@ function ChatApp() {
                 onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                 placeholder="Type your message..."
               />
+              <AudioRecorder onTranscription={handleTranscription} />
               <button onClick={sendMessage}>Send</button>
             </div>
           </div>
@@ -183,8 +224,10 @@ function ChatApp() {
             <button onClick={() => requestSignIn()}>Sign In</button>
           </div>
         )}
+        {audioData && <AudioPlayer audioData={audioData} />}
+        <PassiveSignup trigger={signupTrigger} />
       </header>
-      <ConfettiButton /> {/* Add the ConfettiButton component */}
+      <ConfettiButton />
     </div>
   );
 }

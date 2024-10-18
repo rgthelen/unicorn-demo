@@ -1,0 +1,51 @@
+/* src/components/AudioRecorder.css */
+.microphone-button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  margin-right: 10px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.microphone-icon {
+  width: 24px;
+  height: 24px;
+  transition: transform 0.3s ease, stroke-width 0.3s ease;
+  stroke-width: 2px; /* Default stroke width */
+}
+
+.microphone-button:hover .microphone-icon {
+  animation: wiggle 1.5s infinite;
+}
+
+.microphone-button.recording .microphone-icon {
+  animation: colorChange 1s infinite alternate;
+  stroke-width: 3px; /* Increase stroke width when recording */
+}
+
+@keyframes wiggle {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(10deg);
+  }
+  50% {
+    transform: rotate(-10deg);
+  }
+  75% {
+    transform: rotate(10deg);
+  }
+}
+
+@keyframes colorChange {
+  from {
+    filter: invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(1) contrast(1);
+  }
+  to {
+    filter: invert(50%) sepia(100%) saturate(500%) hue-rotate(-50deg) brightness(1.5) contrast(1);
+  }
+}
