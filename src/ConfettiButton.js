@@ -28,9 +28,9 @@ const ConfettiButton = () => {
       <button
         onClick={handleConfettiClick}
         style={{
-          position: 'fixed',
-          bottom: '20px',
-          right: '20px',
+          position: 'absolute',
+          top: '10px',
+          left: '10px',
           background: 'none',
           border: 'none',
           fontSize: '24px',
