@@ -2,6 +2,7 @@
 import React, { useState, useRef } from 'react';
 import microphoneIcon from './microphone.svg'; // Adjust the path as necessary
 import './AudioRecorder.css'; // Import CSS for styling
+import { useRownd } from '@rownd/react';
 
 const AudioRecorder = ({ onTranscription }) => {
   const [isRecording, setIsRecording] = useState(false);
@@ -9,6 +10,7 @@ const AudioRecorder = ({ onTranscription }) => {
   const audioChunks = useRef([]);
   const timerRef = useRef(null); // Ref to store the timer
   const [progress, setProgress] = useState(0); // State for recording progress
+  const { getAccessToken } = useRownd();
 
   const toggleRecording = async () => {
     if (isRecording) {
@@ -68,8 +70,13 @@ const AudioRecorder = ({ onTranscription }) => {
       const formData = new FormData();
       formData.append('file', audioBlob, 'recording.mp3');
 
+      const accessToken = await getAccessToken({ waitForToken: true });
+
       const response = await fetch('https://audio-test.robert-9e7.workers.dev/api/transcribe', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
         body: formData,
       });
 
