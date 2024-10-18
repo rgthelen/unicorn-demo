@@ -11,7 +11,7 @@ import AudioPlayer from './components/AudioPlayer';
 import PassiveSignup from './components/PassiveSignup';
 
 function ChatApp() {
-  const { is_authenticated, is_initializing, requestSignIn, getAccessToken, setUserValue, getUser, user } = useRownd();
+  const { is_authenticated, requestSignIn, getAccessToken, user } = useRownd();
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [messageCount, setMessageCount] = useState(0);
