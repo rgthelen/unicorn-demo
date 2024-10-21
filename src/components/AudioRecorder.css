@@ -49,3 +49,15 @@
     filter: invert(50%) sepia(100%) saturate(500%) hue-rotate(-50deg) brightness(1.5) contrast(1);
   }
 }
+
+@media (max-width: 768px) {
+  .microphone-button {
+    margin-right: 10px;
+  }
+  .microphone-icon {
+    width: 30px;
+    height: 30px;
+    transition: transform 0.3s ease, stroke-width 0.3s ease;
+    stroke-width: 2px; /* Default stroke width */
+  }
+}

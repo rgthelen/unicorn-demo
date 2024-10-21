@@ -44,7 +44,7 @@ function AudioPlayer({ audioData }) {
 
   return (
     <div className="audio-player">
-      <audio ref={audioRef}>
+      <audio ref={audioRef} playsInline>
         Your browser does not support the audio element.
       </audio>
       <div className="audio-controls">
