@@ -32,7 +32,7 @@ const AudioRecorder = ({ onTranscription }) => {
         };
 
         recorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' }); // Adjust type if needed
+          const audioBlob = new Blob(audioChunks.current, { type: 'audio/mp4' }); // Adjust type if needed
           audioChunks.current = [];
           await sendAudioToWorker(audioBlob);
         };
