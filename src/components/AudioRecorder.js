@@ -32,12 +32,12 @@ const AudioRecorder = ({ onTranscription }) => {
         };
 
         recorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunks.current, { type: 'audio/mp3' });
+          const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' }); // Adjust type if needed
           audioChunks.current = [];
           await sendAudioToWorker(audioBlob);
         };
 
-        recorder.start();
+        recorder.start(1000); // Start recording with a timeslice of 1000ms (1 second)
         setIsRecording(true);
         setProgress(0); // Reset progress when starting recording
 
@@ -68,7 +68,7 @@ const AudioRecorder = ({ onTranscription }) => {
   const sendAudioToWorker = async (audioBlob) => {
     try {
       const formData = new FormData();
-      formData.append('file', audioBlob, 'recording.mp3');
+      formData.append('file', audioBlob, 'recording.webm'); // Adjust file name and type if needed
 
       const accessToken = await getAccessToken({ waitForToken: true });
 
