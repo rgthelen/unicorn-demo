@@ -3,6 +3,7 @@ import React, { useState, useRef } from 'react';
 import microphoneIcon from './microphone.svg'; // Adjust the path as necessary
 import './AudioRecorder.css'; // Import CSS for styling
 import { useRownd } from '@rownd/react';
+import { isIOS } from './detectIOS';
 
 const AudioRecorder = ({ onTranscription }) => {
   const [isRecording, setIsRecording] = useState(false);
@@ -22,9 +23,38 @@ const AudioRecorder = ({ onTranscription }) => {
       clearInterval(timerRef.current); // Clear the progress interval
       setProgress(0); // Reset progress
     } else {
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      if (typeof MediaRecorder === 'undefined' || !navigator.mediaDevices) {
+        console.error('MediaRecorder not supported on your browser!');
+        return;
+      }
+
+      try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const recorder = new MediaRecorder(stream);
+        let options = null;
+
+        if (isIOS()) {
+          // Use 'audio/mp4' or 'audio/m4a' for iOS
+          if (MediaRecorder.isTypeSupported('audio/mp4')) {
+            options = { mimeType: 'audio/mp4' };
+          } else if (MediaRecorder.isTypeSupported('audio/m4a')) {
+            options = { mimeType: 'audio/m4a' };
+          } else {
+            console.error('No supported MIME types found for iOS devices');
+            return;
+          }
+        } else {
+          // Use 'audio/webm;codecs=opus' for other devices
+          if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+            options = { mimeType: 'audio/webm; codecs=opus' };
+          } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+            options = { mimeType: 'audio/webm' };
+          } else {
+            console.error('No supported MIME types found for non-iOS devices');
+            return;
+          }
+        }
+
+        const recorder = new MediaRecorder(stream, options);
         setMediaRecorder(recorder);
 
         recorder.ondataavailable = (event) => {
@@ -32,9 +62,9 @@ const AudioRecorder = ({ onTranscription }) => {
         };
 
         recorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunks.current, { type: 'audio/mp4' }); // Adjust type if needed
+          const audioBlob = new Blob(audioChunks.current, { type: recorder.mimeType });
           audioChunks.current = [];
-          await sendAudioToWorker(audioBlob);
+          await sendAudioToWorker(audioBlob, recorder.mimeType);
         };
 
         recorder.start(1000); // Start recording with a timeslice of 1000ms (1 second)
@@ -59,23 +89,25 @@ const AudioRecorder = ({ onTranscription }) => {
           }
         }, 1000);
         timerRef.current = interval; // Store the interval ID
-      } else {
-        console.error('getUserMedia not supported on your browser!');
+      } catch (err) {
+        console.error('Error accessing media devices:', err);
       }
     }
   };
 
-  const sendAudioToWorker = async (audioBlob) => {
+  const sendAudioToWorker = async (audioBlob, mimeType) => {
     try {
+      const fileExtension = mimeType.includes('mp4') || mimeType.includes('m4a') ? 'm4a' : 'webm';
       const formData = new FormData();
-      formData.append('file', audioBlob, 'recording.webm'); // Adjust file name and type if needed
+      formData.append('file', audioBlob, `recording.${fileExtension}`);
 
       const accessToken = await getAccessToken({ waitForToken: true });
 
       const response = await fetch('https://audio-test.robert-9e7.workers.dev/api/transcribe', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
+          // Do not set 'Content-Type'; let the browser handle it
         },
         body: formData,
       });
