@@ -44,7 +44,7 @@ const AudioRecorder = ({ onTranscription }) => {
           }
         } else {
           // Use 'audio/webm;codecs=opus' for other devices
-          if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          if (MediaRecorder.isTypeSupported('audio/webm; codecs=opus')) {
             options = { mimeType: 'audio/webm; codecs=opus' };
           } else if (MediaRecorder.isTypeSupported('audio/webm')) {
             options = { mimeType: 'audio/webm' };
@@ -97,7 +97,20 @@ const AudioRecorder = ({ onTranscription }) => {
 
   const sendAudioToWorker = async (audioBlob, mimeType) => {
     try {
-      const fileExtension = mimeType.includes('mp4') || mimeType.includes('m4a') ? 'm4a' : 'webm';
+      // Determine file extension based on MIME type
+      let fileExtension = 'webm'; // Default extension
+
+      if (mimeType.includes('mp4')) {
+        fileExtension = 'mp4';
+      } else if (mimeType.includes('m4a')) {
+        fileExtension = 'm4a';
+      } else if (mimeType.includes('webm')) {
+        fileExtension = 'webm';
+      } else {
+        console.error('Unsupported MIME type:', mimeType);
+        return;
+      }
+
       const formData = new FormData();
       formData.append('file', audioBlob, `recording.${fileExtension}`);
 
